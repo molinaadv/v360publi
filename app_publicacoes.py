@@ -41,7 +41,9 @@ CSS = """
 [data-testid="stStatusWidget"],[data-testid="stToolbarActions"]{
   display:none!important;visibility:hidden!important;height:0!important;
   min-height:0!important}
-.block-container{padding:2.2rem 2rem 2rem;max-width:none}
+.block-container{padding:0.4rem 2rem 2rem;max-width:none}
+[data-testid="stAppViewContainer"]>.main{padding-top:0!important}
+[data-testid="stAppViewBlockContainer"]{padding-top:0.4rem!important}
 
 /* ---- topbar ---- */
 .topbar{display:flex;align-items:center;gap:14px;border-bottom:1px solid #10243a;
