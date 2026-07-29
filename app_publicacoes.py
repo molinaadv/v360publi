@@ -20,7 +20,7 @@ from supabase import create_client
 TZ = ZoneInfo("America/Manaus")
 
 st.set_page_config(page_title="V360 Jurídico · IA Publicações",
-                   layout="wide", initial_sidebar_state="expanded")
+                   layout="wide", initial_sidebar_state="collapsed")
 
 CSS = """
 <style>
@@ -30,14 +30,15 @@ CSS = """
   --blue:#2d7df6; --blue2:#58a0ff; --green:#26c281;
   --yellow:#f2b84b; --red:#ef6464; --purple:#8b78ff;
   --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --serif:Georgia,"Iowan Old Style","Times New Roman",serif;
 }
 .stApp{background:linear-gradient(180deg,#06101d 0%,#081421 100%);color:var(--text)}
-#MainMenu,footer,header{visibility:hidden}
-.block-container{padding-top:1rem;padding-bottom:2rem;max-width:1500px}
+#MainMenu,footer,header,section[data-testid="stSidebar"]{display:none}
+.block-container{padding-top:1rem;padding-bottom:2rem;max-width:1680px}
 
 /* ---- topbar ---- */
 .topbar{display:flex;align-items:center;gap:14px;border-bottom:1px solid #10243a;
-  padding-bottom:14px;margin-bottom:18px;flex-wrap:wrap}
+  padding-bottom:14px;margin-bottom:16px;flex-wrap:wrap}
 .logo{width:42px;height:42px;border-radius:13px;
   background:linear-gradient(135deg,#2d7df6,#5b9cff 60%,#6bd5ff);
   display:grid;place-items:center;font-weight:900;color:#fff;font-size:18px;
@@ -51,35 +52,42 @@ CSS = """
   background:var(--green);margin-right:6px;vertical-align:1px}
 
 /* ---- métricas ---- */
-.cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:14px}
 .metric{background:linear-gradient(180deg,#0c192b,#091626);border:1px solid #15304c;
-  border-radius:15px;padding:15px;box-shadow:0 18px 50px rgba(0,0,0,.28)}
+  border-radius:15px;padding:13px 15px;box-shadow:0 18px 50px rgba(0,0,0,.28)}
 .metric .label{color:var(--muted);font-size:12px}
-.metric .value{font-weight:800;font-size:26px;margin-top:4px;font-family:var(--mono)}
-.metric .hint{font-size:11px;color:var(--dim);margin-top:4px}
+.metric .value{font-weight:800;font-size:26px;margin-top:3px;font-family:var(--mono)}
+.metric .hint{font-size:11px;color:var(--dim);margin-top:3px}
 .metric.blue .value{color:var(--blue2)} .metric.yellow .value{color:var(--yellow)}
 .metric.green .value{color:var(--green)} .metric.red .value{color:var(--red)}
 .metric.purple .value{color:var(--purple)}
 
+/* ---- barra de filtros horizontal ---- */
+.filtbar{background:#091725;border:1px solid #15304c;border-radius:14px;
+  padding:6px 14px 2px;margin:4px 0 14px}
+.filtbar-lab{font-size:10px;text-transform:uppercase;letter-spacing:.12em;
+  color:#60758f;padding:6px 0 0}
+
 /* ---- painéis ---- */
 .panel{background:linear-gradient(180deg,#0b182a,#081523);border:1px solid #15314d;
-  border-radius:18px;box-shadow:0 18px 50px rgba(0,0,0,.28);padding:16px 17px;margin-bottom:14px}
+  border-radius:18px;box-shadow:0 18px 50px rgba(0,0,0,.28);padding:16px 18px;margin-bottom:12px}
 .phead{display:flex;align-items:center;justify-content:space-between;gap:14px;
-  border-bottom:1px solid #15304c;padding-bottom:12px;margin-bottom:14px}
+  border-bottom:1px solid #15304c;padding-bottom:11px;margin-bottom:12px}
 .phead h2{font-size:15px;margin:0;font-weight:700}
 .phead span{font-size:12px;color:var(--muted)}
 
-/* ---- detalhe ---- */
-.chead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
-.chead h3{margin:0 0 5px;font-size:18px;font-weight:750}
-.case-no{color:#93a9c1;font-size:12px;font-family:var(--mono)}
-.conf{padding:8px 12px;border-radius:10px;background:#0e2a20;border:1px solid #235b45;
-  color:#82e7bb;font-weight:700;font-size:12px;white-space:nowrap;text-align:center}
-.conf.none{background:#1c1a10;border-color:#5b4a23;color:var(--yellow)}
+/* ---- cabeçalho do detalhe ---- */
+.chead{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;
+  margin-bottom:14px}
+.chead h3{margin:0 0 5px;font-size:22px;font-weight:750;letter-spacing:-.3px}
+.case-no{color:#93a9c1;font-size:12.5px;font-family:var(--mono)}
+.conf{padding:9px 13px;border-radius:11px;background:#0e2a20;border:1px solid #235b45;
+  color:#82e7bb;font-weight:800;font-size:15px;white-space:nowrap;text-align:center}
+.conf.none{background:#1c1a10;border-color:#5b4a23;color:var(--yellow);font-size:13px}
 .conf small{display:block;font-weight:500;font-size:10px;opacity:.8;margin-top:2px}
 
-.badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
-.badge{font-size:10px;padding:4px 8px;border-radius:999px;border:1px solid #24415f;
+.badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.badge{font-size:10.5px;padding:4px 9px;border-radius:999px;border:1px solid #24415f;
   color:#a9bdd4;background:#0a1929;white-space:nowrap}
 .badge.red{border-color:#6a2f36;color:#ff9d9d;background:#2a1218}
 .badge.yellow{border-color:#6f5629;color:#fbd580;background:#2b210f}
@@ -87,26 +95,39 @@ CSS = """
 .badge.blue{border-color:#245ca0;color:#8fc2ff;background:#0b2340}
 .badge.purple{border-color:#514399;color:#b7acff;background:#1c1837}
 
+/* ---- O TEOR: protagonista ---- */
+.teorwrap{border:1px solid #1d3a5c;border-radius:15px;background:#060f1c;overflow:hidden;
+  margin-bottom:13px}
+.teorhead{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:11px 15px;background:#0b1c30;border-bottom:1px solid #17324f}
+.teorhead h4{font-size:12px;margin:0;color:#c7d6e7;font-weight:650;
+  text-transform:uppercase;letter-spacing:.09em}
+.teorhead span{font-size:11px;color:var(--dim)}
+.teor{font-family:var(--serif);font-size:16px;line-height:1.85;color:#dce7f5;
+  white-space:pre-wrap;padding:20px 24px;max-height:460px;overflow:auto;
+  text-align:justify;hyphens:auto}
+.teor::first-line{color:#fff}
+
+/* ---- seções secundárias ---- */
 .section{border:1px solid #17324f;border-radius:14px;background:#081523;
   margin:11px 0;overflow:hidden}
-.section h4{font-size:12px;margin:0;padding:11px 12px;background:#0b1c30;
-  border-bottom:1px solid #17324f;color:#c7d6e7;font-weight:650}
+.section h4{font-size:11.5px;margin:0;padding:10px 13px;background:#0b1c30;
+  border-bottom:1px solid #17324f;color:#c7d6e7;font-weight:650;
+  text-transform:uppercase;letter-spacing:.09em}
 .section .body{padding:12px}
-.original{font-size:12.5px;line-height:1.6;color:#b8c8db;white-space:pre-wrap;
-  max-height:300px;overflow:auto}
 .kvgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-.kv{background:#0a1a2b;border:1px solid #16314c;border-radius:11px;padding:10px}
+.kv{background:#0a1a2b;border:1px solid #16314c;border-radius:11px;padding:10px 12px}
 .kv b{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.08em;
   color:#6f86a0;margin-bottom:5px;font-weight:700}
-.kv span{font-size:12.5px;color:#eaf3ff}
+.kv span{font-size:13.5px;color:#eaf3ff}
 .kv .src{font-size:9px;font-weight:700;letter-spacing:.5px;padding:1px 5px;
   border-radius:4px;margin-left:6px;vertical-align:1px}
 .src.ia{background:#1c1837;color:#b7acff} .src.regex{background:#0d251c;color:#74e0b1}
 .src.calc{background:#0b2340;color:#8fc2ff}
 .risk{background:#2a1419;border:1px solid #6b2d38;color:#ffb2b8;border-radius:11px;
-  padding:11px;font-size:12px;line-height:1.45;margin-top:6px}
-.warnbox{background:#2b210f;border:1px solid #6f5629;color:#fbd580;border-radius:11px;
   padding:11px 13px;font-size:12.5px;line-height:1.5;margin-top:6px}
+.warnbox{background:#2b210f;border:1px solid #6f5629;color:#fbd580;border-radius:12px;
+  padding:12px 14px;font-size:12.5px;line-height:1.55;margin:6px 0 12px}
 .warnbox b{display:block;margin-bottom:3px;color:var(--yellow)}
 
 /* ---- drawer ---- */
@@ -127,7 +148,6 @@ div[data-testid="stVerticalBlock"] .stButton>button:hover{
 div[data-testid="stVerticalBlock"] .stButton>button p{text-align:left;width:100%}
 
 /* ---- widgets no escuro (o dropdown abre num portal) ---- */
-section[data-testid="stSidebar"]{background:#06101c;border-right:1px solid #10243a}
 div[data-baseweb="select"]>div{background:#071321!important;
   border-color:#17324f!important;color:#dce9f8!important}
 div[data-baseweb="select"] div,div[data-baseweb="select"] span{color:#dce9f8!important}
@@ -141,7 +161,7 @@ li[aria-selected="true"]{background:#0e294a!important;color:var(--blue2)!importa
 .stTextInput input{background:#071321!important;color:#dce9f8!important;
   border-color:#17324f!important}
 label,[data-testid="stCaptionContainer"],[data-testid="stWidgetLabel"] p{
-  color:var(--muted)!important}
+  color:var(--muted)!important;font-size:11px!important}
 </style>
 """
 st.markdown(CSS, unsafe_allow_html=True)
@@ -266,6 +286,9 @@ except Exception as e:
         st.error("A view `vw_djen_triagem` não existe no banco. Rode o último patch SQL.")
     elif "permission denied" in msg:
         st.error(f"Falta permissão de leitura para a role anon.\n\n{msg}")
+    elif "statement timeout" in msg:
+        st.error("O banco excedeu o tempo de consulta. A view está calculando "
+                 "campo de texto na leitura — rode o patch de materialização.")
     else:
         st.error(f"Não consegui ler o Supabase.\n\n{msg}")
     st.stop()
@@ -332,30 +355,27 @@ if n_regras == 0:
       </div>""", unsafe_allow_html=True)
 
 # ------------------------------------------------------------------ filtros
-with st.sidebar:
-    st.markdown("""<div style="display:flex;gap:11px;align-items:center;padding:4px 0 18px">
-      <div class="logo" style="width:38px;height:38px;font-size:16px">V</div>
-      <div><b style="font-size:15px">V360 Jurídico</b>
-      <small style="display:block;color:var(--muted);font-size:11px">Operação Jurídica</small></div>
-      </div>""", unsafe_allow_html=True)
-
-    busca = st.text_input("Buscar cliente ou processo", placeholder="nome ou número")
-    tribs = sorted({p.get("sigla_tribunal") or "—" for p in pubs})
-    eventos = sorted({p.get("gatilho_evento") or "—" for p in analisadas})
-    f_trib = st.selectbox("Tribunal", ["todos"] + tribs)
-    f_ev = st.selectbox("Evento", ["todos"] + eventos)
-    f_pri = st.selectbox("Prioridade",
-                         ["todas", "com prazo", "vence em 3 dias", "sem prazo"])
-    f_est = st.selectbox("Estado", ["todos", "analisadas", "aguardando análise"])
-    st.markdown("""<div style="margin-top:18px;padding:12px;border-radius:12px;
-      background:#0a1b2f;border:1px solid #16314e;color:#9db1c8;font-size:11px">
-      <b>Somente leitura</b><br>Fonte: DJEN · CNJ</div>""", unsafe_allow_html=True)
+st.markdown('<div class="filtbar-lab">Filtros</div>', unsafe_allow_html=True)
+c1, c2, c3, c4, c5 = st.columns([1.6, 1, 1, 1, 1])
+busca = c1.text_input("Buscar", placeholder="cliente ou número do processo",
+                      label_visibility="collapsed")
+tribs = sorted({p.get("sigla_tribunal") or "—" for p in pubs})
+eventos = sorted({p.get("gatilho_evento") or "—" for p in analisadas})
+f_trib = c2.selectbox("Tribunal", ["todos os tribunais"] + tribs,
+                      label_visibility="collapsed")
+f_ev = c3.selectbox("Evento", ["todos os eventos"] + eventos,
+                    label_visibility="collapsed")
+f_pri = c4.selectbox("Prioridade",
+                     ["qualquer prazo", "com prazo", "vence em 3 dias", "sem prazo"],
+                     label_visibility="collapsed")
+f_est = c5.selectbox("Estado", ["qualquer estado", "analisadas", "aguardando análise"],
+                     label_visibility="collapsed")
 
 
 def passa(p):
-    if f_trib != "todos" and (p.get("sigla_tribunal") or "—") != f_trib:
+    if not f_trib.startswith("todos") and (p.get("sigla_tribunal") or "—") != f_trib:
         return False
-    if f_ev != "todos" and (p.get("gatilho_evento") or "—") != f_ev:
+    if not f_ev.startswith("todos") and (p.get("gatilho_evento") or "—") != f_ev:
         return False
     if f_est == "analisadas" and not p.get("analisada"):
         return False
@@ -390,12 +410,12 @@ def peso(p):
 
 vis = sorted(vis, key=peso)
 
-esq, dir_ = st.columns([1, 1.35], gap="medium")
+esq, dir_ = st.columns([0.78, 1.6], gap="medium")
 
 # ------------------------------------------------------------------ fila
 with esq:
-    st.markdown(f"""<div class="phead"><div><h2>Fila de publicações</h2>
-      <span>Urgência primeiro, depois data</span></div>
+    st.markdown(f"""<div class="phead"><div><h2>Fila</h2>
+      <span>Urgência primeiro</span></div>
       <span>{len(vis)} de {tot}</span></div>""", unsafe_allow_html=True)
 
     if "sel" not in st.session_state or st.session_state.sel not in {p["id"] for p in vis}:
@@ -410,9 +430,7 @@ with esq:
             estado = f"◆ {d} dia(s) até o limite"
         else:
             estado = "● " + (p.get("gatilho_evento") or "sem gatilho").replace("_", " ")
-        linha3 = f"{p.get('sigla_tribunal') or '—'} · {p.get('area') or '—'}"
-        if st.button(f"{titulo}\n{estado}\n{linha3}",
-                     key=f"b{p['id']}", use_container_width=True):
+        if st.button(f"{titulo}\n{estado}", key=f"b{p['id']}", use_container_width=True):
             st.session_state.sel = p["id"]
 
     if len(vis) > 60:
@@ -428,17 +446,16 @@ conf = g(an, "confianca", "confianca_geral")
 
 with dir_:
     titulo = bonito(sel["cliente"]) if sel.get("cliente") else "Cliente não identificado"
-    if conf is not None:
-        try:
-            cbox = (f'<div class="conf">{float(conf):.0%}'
-                    f'<small>confiança da IA</small></div>')
-        except (TypeError, ValueError):
-            cbox = f'<div class="conf">{conf}<small>confiança</small></div>'
-    elif dsel is not None:
+    if dsel is not None:
         cbox = (f'<div class="conf">{dsel}d'
                 f'<small>até {br(sel.get("data_limite"))}</small></div>')
+    elif conf is not None:
+        try:
+            cbox = f'<div class="conf">{float(conf):.0%}<small>confiança da IA</small></div>'
+        except (TypeError, ValueError):
+            cbox = f'<div class="conf">{conf}<small>confiança</small></div>'
     else:
-        cbox = '<div class="conf none">—<small>sem prazo apurado</small></div>'
+        cbox = '<div class="conf none">sem prazo<small>apurado</small></div>'
 
     bs = [f'<span class="badge blue">{sel.get("area") or "—"}</span>',
           f'<span class="badge">{bonito(sel.get("nome_classe"))}</span>']
@@ -453,6 +470,7 @@ with dir_:
     if origem:
         bs.append(f'<span class="badge purple">lido por {origem}</span>')
 
+    texto = sel.get("texto") or "—"
     st.markdown(f"""<div class="panel">
       <div class="chead">
         <div style="min-width:0">
@@ -462,7 +480,36 @@ with dir_:
           <div class="badges">{''.join(bs)}</div>
         </div>
         {cbox}
-      </div>""", unsafe_allow_html=True)
+      </div>
+
+      <div class="teorwrap">
+        <div class="teorhead"><h4>Publicação</h4>
+          <span>{len(texto):,} caracteres · disponibilizada {br(sel.get('data_disponibilizacao'))}
+          · PII mascarada</span></div>
+        <div class="teor">{texto}</div>
+      </div>""".replace(",", "."), unsafe_allow_html=True)
+
+    # --- prazo
+    if sel.get("data_limite"):
+        st.markdown(f"""<div class="section"><h4>Prazo apurado</h4><div class="body">
+          <div class="kvgrid">
+            <div class="kv"><b>Publicação</b><span>{br(sel.get('data_publicacao'))}
+              <span class="src calc">calc</span></span></div>
+            <div class="kv"><b>Termo inicial</b><span>{br(sel.get('termo_inicial'))}
+              <span class="src calc">calc</span></span></div>
+            <div class="kv"><b>Data limite</b><span>{br(sel.get('data_limite'))}
+              <span class="src calc">calc</span></span></div>
+            <div class="kv"><b>Contagem</b><span>{sel.get('dias_aplicados') or '—'}
+              {sel.get('contagem') or ''}<span class="src calc">calc</span></span></div>
+          </div>
+          {f'<div style="margin-top:9px;font-size:11px;color:#6f8297">Fundamento: {sel["fundamento"]}</div>' if sel.get('fundamento') else ''}
+          </div></div>""", unsafe_allow_html=True)
+    elif sel.get("analisada"):
+        ev = str(sel.get("gatilho_evento") or "sem gatilho").replace("_", " ")
+        st.markdown(f"""<div class="warnbox"><b>Sem regra validada para “{ev}”</b>
+          O evento foi identificado, mas não há regra aprovada para esta classe e o
+          texto não traz número de dias. Entra na fila sem contagem.</div>""",
+          unsafe_allow_html=True)
 
     # --- leitura da IA
     kvs = []
@@ -478,7 +525,6 @@ with dir_:
         if v is not None:
             kvs.append((rot, str(v), src))
     kvs.append(("Segmento", sel.get("segmento") or "—", "calc"))
-    kvs.append(("Disponibilizada", br(sel.get("data_disponibilizacao")), "calc"))
 
     if sel.get("analisada"):
         st.markdown('<div class="section"><h4>Leitura da IA</h4><div class="body">'
@@ -493,29 +539,6 @@ with dir_:
           nada foi extraído desta publicação.</div></div></div>""",
           unsafe_allow_html=True)
 
-    # --- prazo
-    if sel.get("data_limite"):
-        st.markdown(f"""<div class="section"><h4>Prazo</h4><div class="body">
-          <div class="kvgrid">
-            <div class="kv"><b>Publicação</b><span>{br(sel.get('data_publicacao'))}
-              <span class="src calc">calc</span></span></div>
-            <div class="kv"><b>Termo inicial</b><span>{br(sel.get('termo_inicial'))}
-              <span class="src calc">calc</span></span></div>
-            <div class="kv"><b>Data limite</b><span>{br(sel.get('data_limite'))}
-              <span class="src calc">calc</span></span></div>
-            <div class="kv"><b>Contagem</b><span>{sel.get('dias_aplicados') or '—'}
-              {sel.get('contagem') or ''}<span class="src calc">calc</span></span></div>
-          </div>
-          {f'<div style="margin-top:9px;font-size:11px;color:#6f8297">Fundamento: {sel["fundamento"]}</div>' if sel.get('fundamento') else ''}
-          </div></div>""", unsafe_allow_html=True)
-    elif sel.get("analisada"):
-        ev = str(sel.get("gatilho_evento") or "sem gatilho").replace("_", " ")
-        st.markdown(f"""<div class="section"><h4>Prazo</h4><div class="body">
-          <div class="warnbox"><b>Sem regra validada para “{ev}”</b>
-          O evento foi identificado, mas não há regra aprovada para esta classe
-          e o texto não traz número de dias. A publicação entra na fila sem contagem.
-          </div></div></div>""", unsafe_allow_html=True)
-
     # --- alertas
     alertas = g(an, "alertas", "avisos_validacao", default=[])
     if alertas:
@@ -525,10 +548,7 @@ with dir_:
                     + "".join(f'<div class="risk">{a}</div>' for a in alertas)
                     + '</div></div>', unsafe_allow_html=True)
 
-    # --- teor
-    st.markdown('<div class="section"><h4>Publicação original · PII mascarada</h4>'
-                f'<div class="body"><div class="original">{sel.get("texto") or "—"}'
-                '</div></div></div></div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
     with st.expander("JSON bruto da análise"):
         st.json(an if an else {"sem_analise": True})
