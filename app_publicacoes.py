@@ -35,7 +35,7 @@ CSS = """
 }
 .stApp{background:linear-gradient(180deg,#06101d 0%,#081421 100%);color:var(--text)}
 #MainMenu,footer,header,section[data-testid="stSidebar"]{display:none}
-.block-container{padding-top:1rem;padding-bottom:2rem;max-width:1680px}
+.block-container{padding:1rem 2rem 2rem;max-width:none}
 
 /* ---- topbar ---- */
 .topbar{display:flex;align-items:center;gap:14px;border-bottom:1px solid #10243a;
@@ -139,25 +139,23 @@ CSS = """
 .progress i{display:block;height:100%;background:linear-gradient(90deg,#2d7df6,#58a0ff)}
 
 /* ---- botões da fila ---- */
-div[data-testid="stVerticalBlock"] .stButton>button{
+.stButton>button{
   width:100%;text-align:left;justify-content:flex-start;
   background:#0a1929;border:1px solid #10243a;border-left:3px solid transparent;
   border-radius:12px;color:var(--text);padding:11px 13px;font-size:13px;
   font-weight:650;margin-bottom:6px;line-height:1.45}
-div[data-testid="stVerticalBlock"] .stButton>button:hover{
-  background:#0b1e34;border-color:var(--blue)}
-div[data-testid="stVerticalBlock"] .stButton>button p{text-align:left;width:100%}
+.stButton>button:hover{background:#0b1e34;border-color:var(--blue)}
+.stButton>button p{text-align:left;width:100%}
 
-/* ---- indicadores por tribunal: mesmos botões, aparência de cartão ---- */
-div[data-testid="stHorizontalBlock"] .stButton>button{
-  text-align:center;justify-content:center;
-  background:linear-gradient(180deg,#0c192b,#091626);border:1px solid #15304c;
-  border-left:1px solid #15304c;border-radius:13px;padding:9px 6px;
-  font-family:var(--mono);font-size:17px;font-weight:800;color:var(--blue2);
-  line-height:1.25;margin-bottom:0}
-div[data-testid="stHorizontalBlock"] .stButton>button p{text-align:center;width:100%}
-div[data-testid="stHorizontalBlock"] .stButton>button:hover{
-  border-color:var(--blue);background:#0d1f36}
+/* ---- indicadores por tribunal ---- */
+.tribs{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));
+  gap:10px;margin:4px 0 14px}
+.trib{background:linear-gradient(180deg,#0c192b,#091626);border:1px solid #15304c;
+  border-radius:13px;padding:11px 13px;text-align:center}
+.trib .s{font-size:11px;letter-spacing:.1em;color:#a9bdd4;text-transform:uppercase}
+.trib .n{font-family:var(--mono);font-size:21px;font-weight:800;color:#fff;
+  line-height:1.15;margin-top:3px}
+.trib .pc{font-size:10px;color:var(--dim);margin-top:2px}
 
 /* ---- widgets no escuro (o dropdown abre num portal) ---- */
 div[data-baseweb="select"]>div{background:#071321!important;
@@ -370,16 +368,12 @@ if n_regras == 0:
 cont_trib = Counter((p.get("sigla_tribunal") or "—") for p in pubs)
 tribs = [t for t, _ in cont_trib.most_common()]
 
-st.markdown('<div class="filtbar-lab">Por tribunal · clique para filtrar</div>',
-            unsafe_allow_html=True)
-cols_t = st.columns(len(tribs) + 1)
-if cols_t[0].button(f"Todos\n{tot}", key="tb_todos", use_container_width=True):
-    st.session_state.f_trib = "todos os tribunais"
-    st.rerun()
-for col, t in zip(cols_t[1:], tribs):
-    if col.button(f"{t}\n{cont_trib[t]}", key=f"tb_{t}", use_container_width=True):
-        st.session_state.f_trib = t
-        st.rerun()
+st.markdown('<div class="filtbar-lab">Por tribunal</div>', unsafe_allow_html=True)
+st.markdown('<div class="tribs">' + "".join(
+    f'<div class="trib"><div class="s">{t}</div>'
+    f'<div class="n">{cont_trib[t]}</div>'
+    f'<div class="pc">{round(100 * cont_trib[t] / tot)}%</div></div>'
+    for t in tribs) + '</div>', unsafe_allow_html=True)
 
 # ------------------------------------------------------------------ filtros
 st.markdown('<div class="filtbar-lab">Filtros</div>', unsafe_allow_html=True)
@@ -388,7 +382,7 @@ busca = c1.text_input("Buscar", placeholder="cliente ou número do processo",
                       label_visibility="collapsed")
 eventos = sorted({p.get("gatilho_evento") or "—" for p in analisadas})
 f_trib = c2.selectbox("Tribunal", ["todos os tribunais"] + tribs,
-                      key="f_trib", label_visibility="collapsed")
+                      label_visibility="collapsed")
 f_ev = c3.selectbox("Evento", ["todos os eventos"] + eventos,
                     label_visibility="collapsed")
 f_pri = c4.selectbox("Prioridade",
@@ -436,7 +430,7 @@ def peso(p):
 
 vis = sorted(vis, key=peso)
 
-esq, dir_ = st.columns([0.78, 1.6], gap="medium")
+esq, dir_ = st.columns([0.72, 1.7], gap="medium")
 
 # ------------------------------------------------------------------ fila
 with esq:
