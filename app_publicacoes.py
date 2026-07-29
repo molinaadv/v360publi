@@ -35,6 +35,10 @@ CSS = """
 }
 .stApp{background:linear-gradient(180deg,#06101d 0%,#081421 100%);color:var(--text)}
 #MainMenu,footer,header,section[data-testid="stSidebar"]{display:none}
+/* barra Share/GitHub/Deploy, faixa colorida do topo e badge de status */
+[data-testid="stToolbar"],[data-testid="stDecoration"],
+[data-testid="stStatusWidget"],[data-testid="stToolbarActions"]{
+  display:none!important;visibility:hidden!important;height:0!important}
 .block-container{padding:1rem 4.5rem 2rem 2rem;max-width:none}
 
 /* ---- topbar ---- */
