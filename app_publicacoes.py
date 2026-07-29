@@ -11,6 +11,7 @@ Secrets:
 
 import hmac
 import json
+from collections import Counter
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
@@ -34,30 +35,7 @@ CSS = """
 }
 .stApp{background:linear-gradient(180deg,#06101d 0%,#081421 100%);color:var(--text)}
 #MainMenu,footer,header,section[data-testid="stSidebar"]{display:none}
-.block-container{padding-top:1rem;padding-bottom:2rem;max-width:1760px;padding-left:276px;padding-right:24px}
-
-/* ---- navegação lateral V360 ---- */
-.v360-side{position:fixed;left:0;top:0;bottom:0;width:250px;z-index:999;
-  background:#06101c;border-right:1px solid #10243a;padding:22px 16px;color:#b5c6da}
-.v360-brand{display:flex;gap:12px;align-items:center;padding:4px 8px 24px}
-.v360-brand .mark{width:42px;height:42px;border-radius:13px;
-  background:linear-gradient(135deg,#2d7df6,#5b9cff 60%,#6bd5ff);display:grid;place-items:center;
-  font-weight:900;color:#fff;box-shadow:0 10px 30px rgba(45,125,246,.25)}
-.v360-brand b{display:block;color:#fff;font-size:16px}.v360-brand small{color:var(--muted);font-size:11px}
-.v360-nav-title{font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:#60758f;margin:12px 10px 8px}
-.v360-nav-item{display:flex;align-items:center;gap:11px;padding:10px 12px;margin:4px 0;border-radius:11px;
-  color:#aebfd2;font-size:13px;border:1px solid transparent}
-.v360-nav-item .ndot{width:7px;height:7px;border-radius:50%;background:#36506d}
-.v360-nav-item.active{background:#0f2847;color:#fff;border-color:#184271}
-.v360-nav-item.active .ndot{background:var(--blue2);box-shadow:0 0 0 4px rgba(88,160,255,.12)}
-.v360-side-foot{position:absolute;left:16px;right:16px;bottom:18px;padding:12px;border-radius:13px;
-  background:#0a1b2f;border:1px solid #16314e;color:#9db1c8;font-size:11px;line-height:1.5}
-.readonly-pill{display:inline-flex;align-items:center;gap:6px;color:#8fc2ff;background:#0b2340;
- border:1px solid #245ca0;border-radius:999px;padding:4px 9px;font-size:10px}
-.invest-step{display:grid;grid-template-columns:30px 1fr;gap:10px;margin:10px 0}
-.invest-step .ico{width:27px;height:27px;border-radius:9px;background:#102842;display:grid;place-items:center;font-size:11px}
-.invest-step strong{font-size:12px;color:#eaf3ff}.invest-step p{margin:3px 0 0;color:#8ca1b7;font-size:11px;line-height:1.45}
-@media(max-width:1050px){.v360-side{display:none}.block-container{padding-left:18px;padding-right:18px}}
+.block-container{padding-top:1rem;padding-bottom:2rem;max-width:1680px}
 
 /* ---- topbar ---- */
 .topbar{display:flex;align-items:center;gap:14px;border-bottom:1px solid #10243a;
@@ -164,11 +142,22 @@ CSS = """
 div[data-testid="stVerticalBlock"] .stButton>button{
   width:100%;text-align:left;justify-content:flex-start;
   background:#0a1929;border:1px solid #10243a;border-left:3px solid transparent;
-  border-radius:13px;color:var(--text);padding:13px 14px;font-size:13px;
+  border-radius:12px;color:var(--text);padding:11px 13px;font-size:13px;
   font-weight:650;margin-bottom:6px;line-height:1.45}
 div[data-testid="stVerticalBlock"] .stButton>button:hover{
   background:#0b1e34;border-color:var(--blue)}
 div[data-testid="stVerticalBlock"] .stButton>button p{text-align:left;width:100%}
+
+/* ---- indicadores por tribunal: mesmos botões, aparência de cartão ---- */
+div[data-testid="stHorizontalBlock"] .stButton>button{
+  text-align:center;justify-content:center;
+  background:linear-gradient(180deg,#0c192b,#091626);border:1px solid #15304c;
+  border-left:1px solid #15304c;border-radius:13px;padding:9px 6px;
+  font-family:var(--mono);font-size:17px;font-weight:800;color:var(--blue2);
+  line-height:1.25;margin-bottom:0}
+div[data-testid="stHorizontalBlock"] .stButton>button p{text-align:center;width:100%}
+div[data-testid="stHorizontalBlock"] .stButton>button:hover{
+  border-color:var(--blue);background:#0d1f36}
 
 /* ---- widgets no escuro (o dropdown abre num portal) ---- */
 div[data-baseweb="select"]>div{background:#071321!important;
@@ -217,25 +206,6 @@ def porta():
 
 
 porta()
-
-st.markdown("""
-<div class="v360-side">
-  <div class="v360-brand"><div class="mark">V</div><div><b>V360 Jurídico</b><small>Operação Jurídica</small></div></div>
-  <div class="v360-nav-title">Principal</div>
-  <div class="v360-nav-item"><span class="ndot"></span>Resumo</div>
-  <div class="v360-nav-item"><span class="ndot"></span>Atendimento</div>
-  <div class="v360-nav-item"><span class="ndot"></span>Serviços</div>
-  <div class="v360-nav-item"><span class="ndot"></span>Administrativo</div>
-  <div class="v360-nav-item"><span class="ndot"></span>Confecção</div>
-  <div class="v360-nav-item"><span class="ndot"></span>Processos</div>
-  <div class="v360-nav-item active"><span class="ndot"></span>IA Publicações</div>
-  <div class="v360-nav-item"><span class="ndot"></span>Financeiro</div>
-  <div class="v360-nav-title">Gestão</div>
-  <div class="v360-nav-item"><span class="ndot"></span>Relatórios</div>
-  <div class="v360-nav-item"><span class="ndot"></span>Configurações</div>
-  <div class="v360-side-foot"><b>Motor V360 ativo</b><br>DJEN · Supabase · regras de prazo<br><span class="readonly-pill">somente leitura</span></div>
-</div>
-""", unsafe_allow_html=True)
 
 
 # ------------------------------------------------------------------ dados
@@ -360,7 +330,7 @@ st.markdown(f"""
 <div class="topbar">
   <div class="logo">V</div>
   <div><h1>IA Publicações</h1>
-    <p>Captura, investigação processual, análise jurídica e apuração de prazo</p></div>
+    <p>Captura no DJEN, leitura por IA e apuração de prazo</p></div>
   <div class="tb-right">
     <span class="chip"><span class="live"></span>DJEN · CNJ</span>
     <span class="chip">{hoje.strftime('%d/%m/%Y')}</span>
@@ -369,19 +339,19 @@ st.markdown(f"""
 </div>
 
 <div class="cards">
-  <div class="metric purple"><div class="label">Publicações na base</div>
+  <div class="metric purple"><div class="label">Na base</div>
     <div class="value">{tot}</div>
     <div class="hint">{novas_hoje} disponibilizadas hoje</div></div>
   <div class="metric yellow"><div class="label">Aguardando análise</div>
     <div class="value">{aguardando}</div>
     <div class="hint">fila do analisador</div></div>
-  <div class="metric blue"><div class="label">Prazo identificado</div>
+  <div class="metric blue"><div class="label">Prazo apurado</div>
     <div class="value">{len(com_prazo)}</div>
     <div class="hint">{urgentes} vencem em até 3 dias</div></div>
-  <div class="metric red"><div class="label">Investigação nos autos</div>
+  <div class="metric red"><div class="label">Precisa dos autos</div>
     <div class="value">{precisa_autos}</div>
     <div class="hint">IA não decide só pelo texto</div></div>
-  <div class="metric green"><div class="label">Automação por regra</div>
+  <div class="metric green"><div class="label">Resolvidas sem IA</div>
     <div class="value">{pct_regex}%</div>
     <div class="hint">{por_regex} de {len(analisadas)} por regex · custo zero</div></div>
 </div>
@@ -396,15 +366,29 @@ if n_regras == 0:
       escrito no próprio texto. O resto fica em branco de propósito.
       </div>""", unsafe_allow_html=True)
 
+# ------------------------------------------------------------------ tribunais
+cont_trib = Counter((p.get("sigla_tribunal") or "—") for p in pubs)
+tribs = [t for t, _ in cont_trib.most_common()]
+
+st.markdown('<div class="filtbar-lab">Por tribunal · clique para filtrar</div>',
+            unsafe_allow_html=True)
+cols_t = st.columns(len(tribs) + 1)
+if cols_t[0].button(f"Todos\n{tot}", key="tb_todos", use_container_width=True):
+    st.session_state.f_trib = "todos os tribunais"
+    st.rerun()
+for col, t in zip(cols_t[1:], tribs):
+    if col.button(f"{t}\n{cont_trib[t]}", key=f"tb_{t}", use_container_width=True):
+        st.session_state.f_trib = t
+        st.rerun()
+
 # ------------------------------------------------------------------ filtros
 st.markdown('<div class="filtbar-lab">Filtros</div>', unsafe_allow_html=True)
 c1, c2, c3, c4, c5 = st.columns([1.6, 1, 1, 1, 1])
 busca = c1.text_input("Buscar", placeholder="cliente ou número do processo",
                       label_visibility="collapsed")
-tribs = sorted({p.get("sigla_tribunal") or "—" for p in pubs})
 eventos = sorted({p.get("gatilho_evento") or "—" for p in analisadas})
 f_trib = c2.selectbox("Tribunal", ["todos os tribunais"] + tribs,
-                      label_visibility="collapsed")
+                      key="f_trib", label_visibility="collapsed")
 f_ev = c3.selectbox("Evento", ["todos os eventos"] + eventos,
                     label_visibility="collapsed")
 f_pri = c4.selectbox("Prioridade",
@@ -452,12 +436,12 @@ def peso(p):
 
 vis = sorted(vis, key=peso)
 
-esq, dir_ = st.columns([1.08, 0.92], gap="medium")
+esq, dir_ = st.columns([0.78, 1.6], gap="medium")
 
 # ------------------------------------------------------------------ fila
 with esq:
-    st.markdown(f"""<div class="phead"><div><h2>Fila de publicações</h2>
-      <span>Ordenadas por urgência e data</span></div>
+    st.markdown(f"""<div class="phead"><div><h2>Fila</h2>
+      <span>Urgência primeiro</span></div>
       <span>{len(vis)} de {tot}</span></div>""", unsafe_allow_html=True)
 
     if "sel" not in st.session_state or st.session_state.sel not in {p["id"] for p in vis}:
@@ -533,25 +517,6 @@ with dir_:
     )
     st.markdown(html, unsafe_allow_html=True)
 
-    # --- investigação automática do processo
-    precisa = g(an, "precisa_autos") in (True, "true", "sim")
-    passo3_titulo = "Autos necessários" if precisa else ("Análise concluída" if sel.get("analisada") else "Aguardando analisador")
-    passo3_texto = (
-        "O texto recebido não é suficiente. Esta publicação deve seguir para consulta do processo/documento relacionado."
-        if precisa else
-        ("O sistema extraiu evento, prazo/providência disponíveis e classificou a publicação."
-         if sel.get("analisada") else
-         "A publicação foi capturada e permanece na fila para extração estruturada.")
-    )
-    st.markdown(
-        '<div class="section"><h4>Investigação automática do processo</h4><div class="body">'
-        '<div class="invest-step"><div class="ico">1</div><div><strong>Processo identificado</strong>'
-        f'<p>Número CNJ {sel.get("numero_processo") or "—"} associado à publicação.</p></div></div>'
-        '<div class="invest-step"><div class="ico">2</div><div><strong>Publicação capturada</strong>'
-        f'<p>Origem {sel.get("sigla_tribunal") or "tribunal não informado"} · disponibilização {br(sel.get("data_disponibilizacao"))}.</p></div></div>'
-        f'<div class="invest-step"><div class="ico">3</div><div><strong>{passo3_titulo}</strong><p>{passo3_texto}</p></div></div>'
-        '</div></div>', unsafe_allow_html=True)
-
     # --- prazo
     if sel.get("data_limite"):
         st.markdown(
@@ -593,7 +558,7 @@ with dir_:
     kvs.append(("Segmento", sel.get("segmento") or "—", "calc"))
 
     if sel.get("analisada"):
-        st.markdown('<div class="section"><h4>Resultado da IA</h4><div class="body">'
+        st.markdown('<div class="section"><h4>Leitura da IA</h4><div class="body">'
                     '<div class="kvgrid">' + "".join(
                         f'<div class="kv"><b>{k}</b><span>{v}'
                         f'<span class="src {s}">{s}</span></span></div>'
@@ -601,7 +566,7 @@ with dir_:
                     unsafe_allow_html=True)
     else:
         st.markdown(
-            '<div class="section"><h4>Resultado da IA</h4><div class="body">'
+            '<div class="section"><h4>Leitura da IA</h4><div class="body">'
             '<div class="risk">Ainda não analisada. Está na fila do analisador — '
             'nada foi extraído desta publicação.</div></div></div>',
             unsafe_allow_html=True)
@@ -614,15 +579,6 @@ with dir_:
         st.markdown('<div class="section"><h4>Alertas da análise</h4><div class="body">'
                     + "".join(f'<div class="risk">{a}</div>' for a in alertas)
                     + '</div></div>', unsafe_allow_html=True)
-
-    # --- providência / operação
-    if sel.get("analisada"):
-        prov = g(an, "providencia", "acao_sugerida", default="Sem providência estruturada na análise atual.")
-        st.markdown(
-            '<div class="section"><h4>Providência sugerida</h4><div class="body">'
-            f'<div style="font-size:13px;line-height:1.55;color:#dce7f5">{prov}</div>'
-            '<div style="margin-top:10px"><span class="readonly-pill">Tela atual em modo somente leitura</span></div>'
-            '</div></div>', unsafe_allow_html=True)
 
     # --- o teor, para conferir contra o que a IA leu
     st.markdown(
