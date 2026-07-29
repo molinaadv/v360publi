@@ -108,13 +108,19 @@ div[data-testid="stVerticalBlock"] .stButton>button:hover{
   background:var(--panel2);border-color:var(--accent)}
 div[data-testid="stVerticalBlock"] .stButton>button p{text-align:left;width:100%}
 
-/* inputs no tema escuro (o baseweb do Streamlit vem claro por padrão) */
+/* inputs no tema escuro. O dropdown aberto renderiza num PORTAL, fora da
+   árvore do app — precisa de seletor próprio, senão fica branco no branco. */
 div[data-baseweb="select"]>div{background:var(--panel)!important;
   border-color:var(--line)!important;color:var(--ink)!important}
 div[data-baseweb="select"] div,div[data-baseweb="select"] span{color:var(--ink)!important}
 div[data-baseweb="select"] svg{fill:var(--muted)!important}
-ul[data-baseweb="menu"]{background:var(--panel2)!important}
-li[role="option"]{color:var(--ink)!important}
+div[data-baseweb="popover"],div[data-baseweb="popover"]>div,
+div[data-baseweb="menu"],ul[data-baseweb="menu"],ul[role="listbox"]{
+  background:var(--panel2)!important;border:1px solid var(--line)!important}
+li[role="option"],ul[role="listbox"] li,div[data-baseweb="menu"] li{
+  background:transparent!important;color:var(--ink)!important}
+li[role="option"]:hover,ul[role="listbox"] li:hover{background:var(--panel)!important}
+li[aria-selected="true"]{background:var(--panel)!important;color:var(--accent)!important}
 .stTextInput input{background:var(--panel)!important;color:var(--ink)!important;
   border-color:var(--line)!important}
 label,[data-testid="stCaptionContainer"],[data-testid="stWidgetLabel"] p{
