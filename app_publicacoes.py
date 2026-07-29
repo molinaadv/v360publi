@@ -35,7 +35,7 @@ CSS = """
 }
 .stApp{background:linear-gradient(180deg,#06101d 0%,#081421 100%);color:var(--text)}
 #MainMenu,footer,header,section[data-testid="stSidebar"]{display:none}
-.block-container{padding:1rem 2rem 2rem;max-width:none}
+.block-container{padding:1rem 4.5rem 2rem 2rem;max-width:none}
 
 /* ---- topbar ---- */
 .topbar{display:flex;align-items:center;gap:14px;border-bottom:1px solid #10243a;
@@ -147,13 +147,18 @@ CSS = """
 .stButton>button:hover{background:#0b1e34;border-color:var(--blue)}
 .stButton>button p{text-align:left;width:100%}
 
-/* ---- centro de notificações ---- */
+/* ---- barra lateral direita (rail) + sino fixo ---- */
+.rail{position:fixed;top:0;right:0;width:52px;height:100vh;
+  background:#081524;border-left:1px solid #142c47;z-index:900}
+div[data-testid="stPopover"]{position:fixed!important;top:14px;right:8px;
+  z-index:950;width:auto!important}
 div[data-testid="stPopover"] button,button[data-testid="stPopoverButton"]{
   background:#2b210f!important;border:1px solid #6f5629!important;
   color:var(--yellow)!important;border-radius:11px!important;
-  font-size:12.5px!important;font-weight:650!important;padding:8px 14px!important;
-  width:auto!important;text-align:center!important;margin:0 0 14px!important}
-div[data-testid="stPopover"] button p{text-align:center!important}
+  font-size:13px!important;font-weight:800!important;padding:7px 9px!important;
+  width:36px!important;min-width:36px!important;text-align:center!important;
+  margin:0!important;line-height:1.1!important}
+div[data-testid="stPopover"] button p{text-align:center!important;width:100%}
 
 /* ---- indicadores por tribunal ---- */
 .tribs{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));
@@ -332,6 +337,53 @@ pct_regex = round(100 * por_regex / max(len(analisadas), 1))
 com_nome = sum(1 for p in pubs if p.get("cliente"))
 pct_nome = round(100 * com_nome / max(tot, 1))
 
+@st.cache_data(ttl=300)
+def oabs_faltando() -> int:
+    try:
+        r = (_cli().table("vw_djen_oabs_descobertas").select("numero_oab", count="exact")
+             .eq("cadastrada", False).execute())
+        return r.count or 0
+    except Exception:
+        return -1
+
+
+# ------------------------------------------------------------------ avisos
+# Renderizado ANTES do topbar de propósito: o CSS o fixa no canto superior
+# direito, e sair primeiro no DOM evita salto de layout no carregamento.
+avisos = []
+if n_regras == 0:
+    avisos.append((
+        "Nenhuma regra de prazo validada",
+        "A IA identifica o evento de cada publicação, mas a data limite só sai de "
+        "regras aprovadas pelo jurídico em v360_prazos_legais. Hoje os prazos "
+        "apurados vêm apenas do número de dias escrito no próprio texto."))
+if aguardando:
+    custo = aguardando * 0.05
+    avisos.append((
+        f"{aguardando} publicações aguardando análise",
+        f"Custo estimado para processar a fila: US$ {custo:,.0f}".replace(",", ".")
+        + ". O analisador deve ficar desligado até a estratégia de custo estar definida."))
+_faltam = oabs_faltando()
+if _faltam > 0:
+    avisos.append((
+        f"{_faltam} inscrição(ões) de OAB não cadastrada(s)",
+        "O DJEN devolveu grafias de advogados do escritório que não estão em "
+        "djen_identidades. Enquanto não forem cadastradas, as publicações sob "
+        "essas inscrições não são capturadas — e a falha é silenciosa."))
+if tot - com_nome:
+    avisos.append((
+        f"{tot - com_nome} publicações sem nome de cliente",
+        "O texto não traz cabeçalho de partes, ou a inscrição do advogado que "
+        "consta nele não permite ancorar o polo. Não é erro de leitura."))
+
+st.markdown('<div class="rail"></div>', unsafe_allow_html=True)
+if avisos:
+    with st.popover(f"🔔 {len(avisos)}", use_container_width=False):
+        st.markdown("##### Avisos do sistema")
+        for titulo, corpo in avisos:
+            st.markdown(f"**{titulo}**  \n{corpo}")
+            st.divider()
+
 st.markdown(f"""
 <div class="topbar">
   <div class="logo">V</div>
@@ -362,49 +414,6 @@ st.markdown(f"""
     <div class="hint">{por_regex} de {len(analisadas)} por regex · custo zero</div></div>
 </div>
 """, unsafe_allow_html=True)
-
-@st.cache_data(ttl=300)
-def oabs_faltando() -> int:
-    try:
-        r = (_cli().table("vw_djen_oabs_descobertas").select("numero_oab", count="exact")
-             .eq("cadastrada", False).execute())
-        return r.count or 0
-    except Exception:
-        return -1
-
-
-# ------------------------------------------------------------------ avisos
-avisos = []
-if n_regras == 0:
-    avisos.append((
-        "Nenhuma regra de prazo validada",
-        "A IA identifica o evento de cada publicação, mas a data limite só sai de "
-        "regras aprovadas pelo jurídico em v360_prazos_legais. Hoje os prazos "
-        "apurados vêm apenas do número de dias escrito no próprio texto."))
-if aguardando:
-    custo = aguardando * 0.05
-    avisos.append((
-        f"{aguardando} publicações aguardando análise",
-        f"Custo estimado para processar a fila: US$ {custo:,.0f}".replace(",", ".")
-        + ". O analisador deve ficar desligado até a estratégia de custo estar definida."))
-_faltam = oabs_faltando()
-if _faltam > 0:
-    avisos.append((
-        f"{_faltam} inscrição(ões) de OAB não cadastrada(s)",
-        "O DJEN devolveu grafias de advogados do escritório que não estão em "
-        "djen_identidades. Enquanto não forem cadastradas, as publicações sob "
-        "essas inscrições não são capturadas — e a falha é silenciosa."))
-if tot - com_nome:
-    avisos.append((
-        f"{tot - com_nome} publicações sem nome de cliente",
-        "O texto não traz cabeçalho de partes, ou a inscrição do advogado que "
-        "consta nele não permite ancorar o polo. Não é erro de leitura."))
-
-if avisos:
-    with st.popover(f"🔔 {len(avisos)} aviso(s) do sistema", use_container_width=False):
-        for titulo, corpo in avisos:
-            st.markdown(f"**{titulo}**  \n{corpo}")
-            st.divider()
 
 # ------------------------------------------------------------------ tribunais
 cont_trib = Counter((p.get("sigla_tribunal") or "—") for p in pubs)
