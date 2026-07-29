@@ -475,7 +475,7 @@ with dir_:
 
     # HTML sem indentação e SEM linha em branco: o Markdown do Streamlit
     # trata linha vazia como fim do bloco e o que vem indentado depois
-    # virava code block — foi o que sumiu com o teor.
+    # vira code block — foi o que sumiu com o teor.
     html = (
         '<div class="panel">'
         '<div class="chead">'
@@ -486,12 +486,6 @@ with dir_:
         f'<div class="badges">{"".join(bs)}</div>'
         '</div>'
         f'{cbox}'
-        '</div>'
-        '<div class="teorwrap">'
-        '<div class="teorhead"><h4>Publicação</h4>'
-        f'<span>{nchars} caracteres · disponibilizada '
-        f'{br(sel.get("data_disponibilizacao"))} · PII mascarada</span></div>'
-        f'<div class="teor">{texto}</div>'
         '</div>'
         '</div>'
     )
@@ -559,6 +553,15 @@ with dir_:
         st.markdown('<div class="section"><h4>Alertas da análise</h4><div class="body">'
                     + "".join(f'<div class="risk">{a}</div>' for a in alertas)
                     + '</div></div>', unsafe_allow_html=True)
+
+    # --- o teor, para conferir contra o que a IA leu
+    st.markdown(
+        '<div class="teorwrap">'
+        '<div class="teorhead"><h4>Publicação · texto do tribunal</h4>'
+        f'<span>{nchars} caracteres · disponibilizada '
+        f'{br(sel.get("data_disponibilizacao"))} · PII mascarada</span></div>'
+        f'<div class="teor">{texto}</div>'
+        '</div>', unsafe_allow_html=True)
 
     with st.expander("JSON bruto da análise"):
         st.json(an if an else {"sem_analise": True})
