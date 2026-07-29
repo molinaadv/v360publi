@@ -57,6 +57,23 @@ CSS = """
 .card h3{margin:0 0 2px;font-size:19px;font-weight:700;letter-spacing:-.3px;color:var(--ink)}
 .dsub{font-family:var(--mono);font-size:11.5px;color:var(--dim);margin-bottom:12px}
 
+.dhead{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+.tag{display:inline-block;font-size:10.5px;padding:2px 8px;border-radius:6px;
+  border:1px solid var(--line);color:var(--muted);background:#0f1728;margin:6px 6px 0 0}
+.tag.prev{color:var(--accent);border-color:#2b3d6b}
+.tag.civ{color:#f38ba8;border-color:#5a2f43}
+.tag.trab{color:var(--roxo);border-color:#3b3168}
+
+.clock{margin-left:auto;display:flex;align-items:center;gap:12px;background:#0f1728;
+  border:1px solid var(--line);border-radius:14px;padding:10px 14px}
+.ring{width:52px;height:52px;flex:0 0 auto;position:relative}
+.ring.vazio{display:grid;place-items:center;color:var(--dim);font-family:var(--mono);
+  font-size:18px;border:2px dashed var(--line);border-radius:50%}
+.ring .num{position:absolute;inset:0;display:grid;place-items:center;
+  font-family:var(--mono);font-size:17px;font-weight:800;line-height:1}
+.clock .cl{font-size:10px;text-transform:uppercase;letter-spacing:.9px;color:var(--dim)}
+.clock .cv{font-size:13px;font-weight:650;margin-top:1px;color:var(--ink)}
+
 .teorlab{font-size:10px;letter-spacing:1px;text-transform:uppercase;
   color:var(--dim);margin:14px 0 7px}
 .teor{background:#0d1424;border:1px solid var(--line);border-left:3px solid var(--dim);
@@ -322,11 +339,44 @@ if isinstance(an, str):
 origem = (g(an, "origem") or "").lower()
 cls_src = "regex" if origem == "regex" else "ia"
 
+def anel(dias, total):
+    """Relógio de prazo. Vazio quando não há data limite — não inventa."""
+    if dias is None:
+        return """<div class="clock"><div class="ring vazio">—</div>
+          <div><div class="cl">data limite</div>
+          <div class="cv">sem regra</div></div></div>"""
+    cor = "var(--crit)" if dias <= 3 else "var(--warn)" if dias <= 10 else "var(--ok)"
+    frac = 0.0 if not total else max(0.0, min(1.0, dias / max(total, 1)))
+    circ = 2 * 3.14159 * 22
+    return f"""<div class="clock">
+      <div class="ring"><svg width="52" height="52" viewBox="0 0 52 52">
+        <circle cx="26" cy="26" r="22" fill="none" stroke="#1d2740" stroke-width="5"/>
+        <circle cx="26" cy="26" r="22" fill="none" stroke="{cor}" stroke-width="5"
+          stroke-linecap="round" stroke-dasharray="{circ:.0f}"
+          stroke-dashoffset="{circ * (1 - frac):.0f}"
+          transform="rotate(-90 26 26)"/>
+      </svg><div class="num" style="color:{cor}">{dias}</div></div>
+      <div><div class="cl">dias até o limite</div>
+      <div class="cv">{br(sel.get('data_limite'))}</div></div></div>"""
+
+
 with dir_:
+    dsel = dias_ate(sel.get("data_limite"))
+    area = sel.get("area") or "—"
+    tagcls = "civ" if area == "Cível" else "trab" if area == "Trabalhista" else "prev"
+    titulo = bonito(sel.get("cliente")) if sel.get("cliente") else sel["numero_processo"]
+
     st.markdown(f"""<div class="card">
-      <h3>{bonito(sel.get('nome_classe'))}</h3>
-      <div class="dsub">{sel['numero_processo']} · {sel.get('sigla_tribunal') or '—'}
-        · {bonito(sel.get('orgao'))}</div>""", unsafe_allow_html=True)
+      <div class="dhead">
+        <div style="min-width:0">
+          <h3>{titulo}</h3>
+          <div class="dsub">{sel['numero_processo']} · {sel.get('sigla_tribunal') or '—'}
+            · {bonito(sel.get('orgao'))}</div>
+          <div><span class="tag {tagcls}">{area}</span>
+            <span class="tag">{bonito(sel.get('nome_classe'))}</span></div>
+        </div>
+        {anel(dsel, sel.get('dias_aplicados'))}
+      </div>""", unsafe_allow_html=True)
 
     campos = []
     if sel.get("gatilho_evento"):
