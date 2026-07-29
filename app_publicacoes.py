@@ -147,6 +147,14 @@ CSS = """
 .stButton>button:hover{background:#0b1e34;border-color:var(--blue)}
 .stButton>button p{text-align:left;width:100%}
 
+/* ---- centro de notificações ---- */
+div[data-testid="stPopover"] button,button[data-testid="stPopoverButton"]{
+  background:#2b210f!important;border:1px solid #6f5629!important;
+  color:var(--yellow)!important;border-radius:11px!important;
+  font-size:12.5px!important;font-weight:650!important;padding:8px 14px!important;
+  width:auto!important;text-align:center!important;margin:0 0 14px!important}
+div[data-testid="stPopover"] button p{text-align:center!important}
+
 /* ---- indicadores por tribunal ---- */
 .tribs{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));
   gap:10px;margin:4px 0 14px}
@@ -355,14 +363,48 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
+@st.cache_data(ttl=300)
+def oabs_faltando() -> int:
+    try:
+        r = (_cli().table("vw_djen_oabs_descobertas").select("numero_oab", count="exact")
+             .eq("cadastrada", False).execute())
+        return r.count or 0
+    except Exception:
+        return -1
+
+
+# ------------------------------------------------------------------ avisos
+avisos = []
 if n_regras == 0:
-    st.markdown("""<div class="warnbox">
-      <b>Nenhuma regra de prazo validada</b>
-      A IA já identifica o evento de cada publicação, mas a data limite só é
-      calculada a partir de regras aprovadas pelo jurídico em
-      <b>v360_prazos_legais</b>. Os prazos apurados hoje vêm do número de dias
-      escrito no próprio texto. O resto fica em branco de propósito.
-      </div>""", unsafe_allow_html=True)
+    avisos.append((
+        "Nenhuma regra de prazo validada",
+        "A IA identifica o evento de cada publicação, mas a data limite só sai de "
+        "regras aprovadas pelo jurídico em v360_prazos_legais. Hoje os prazos "
+        "apurados vêm apenas do número de dias escrito no próprio texto."))
+if aguardando:
+    custo = aguardando * 0.05
+    avisos.append((
+        f"{aguardando} publicações aguardando análise",
+        f"Custo estimado para processar a fila: US$ {custo:,.0f}".replace(",", ".")
+        + ". O analisador deve ficar desligado até a estratégia de custo estar definida."))
+_faltam = oabs_faltando()
+if _faltam > 0:
+    avisos.append((
+        f"{_faltam} inscrição(ões) de OAB não cadastrada(s)",
+        "O DJEN devolveu grafias de advogados do escritório que não estão em "
+        "djen_identidades. Enquanto não forem cadastradas, as publicações sob "
+        "essas inscrições não são capturadas — e a falha é silenciosa."))
+if tot - com_nome:
+    avisos.append((
+        f"{tot - com_nome} publicações sem nome de cliente",
+        "O texto não traz cabeçalho de partes, ou a inscrição do advogado que "
+        "consta nele não permite ancorar o polo. Não é erro de leitura."))
+
+if avisos:
+    with st.popover(f"🔔 {len(avisos)} aviso(s) do sistema", use_container_width=False):
+        for titulo, corpo in avisos:
+            st.markdown(f"**{titulo}**  \n{corpo}")
+            st.divider()
 
 # ------------------------------------------------------------------ tribunais
 cont_trib = Counter((p.get("sigla_tribunal") or "—") for p in pubs)
