@@ -1,12 +1,15 @@
 [theme]
 base = "dark"
-backgroundColor = "#0b1220"
-secondaryBackgroundColor = "#141d2e"
-textColor = "#f2f6ff"
-primaryColor = "#5b8cff"
+backgroundColor = "#07111f"
+secondaryBackgroundColor = "#0b1728"
+textColor = "#eef5ff"
+primaryColor = "#2d7df6"
 
 [client]
+# esconde a barra Share / editar / GitHub / Deploy e o menu de hambúrguer
+toolbarMode = "minimal"
 showSidebarNavigation = false
+showErrorDetails = false
 
 [server]
 enableStaticServing = false
