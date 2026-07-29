@@ -39,7 +39,7 @@ CSS = """
 [data-testid="stToolbar"],[data-testid="stDecoration"],
 [data-testid="stStatusWidget"],[data-testid="stToolbarActions"]{
   display:none!important;visibility:hidden!important;height:0!important}
-.block-container{padding:1rem 4.5rem 2rem 2rem;max-width:none}
+.block-container{padding:1.4rem 2rem 2rem;max-width:none}
 
 /* ---- topbar ---- */
 .topbar{display:flex;align-items:center;gap:14px;border-bottom:1px solid #10243a;
@@ -151,17 +151,13 @@ CSS = """
 .stButton>button:hover{background:#0b1e34;border-color:var(--blue)}
 .stButton>button p{text-align:left;width:100%}
 
-/* ---- barra lateral direita (rail) + sino fixo ---- */
-.rail{position:fixed;top:0;right:0;width:52px;height:100vh;
-  background:#081524;border-left:1px solid #142c47;z-index:900}
-div[data-testid="stPopover"]{position:fixed!important;top:14px;right:8px;
-  z-index:950;width:auto!important}
+/* ---- sino de avisos (fica numa coluna à direita do cabeçalho) ---- */
+div[data-testid="stPopover"]{display:flex;justify-content:flex-end;margin-top:6px}
 div[data-testid="stPopover"] button,button[data-testid="stPopoverButton"]{
   background:#2b210f!important;border:1px solid #6f5629!important;
   color:var(--yellow)!important;border-radius:11px!important;
-  font-size:13px!important;font-weight:800!important;padding:7px 9px!important;
-  width:36px!important;min-width:36px!important;text-align:center!important;
-  margin:0!important;line-height:1.1!important}
+  font-size:14px!important;font-weight:800!important;padding:9px 10px!important;
+  text-align:center!important;margin:0!important;line-height:1.1!important}
 div[data-testid="stPopover"] button p{text-align:center!important;width:100%}
 
 /* ---- indicadores por tribunal ---- */
@@ -380,16 +376,9 @@ if tot - com_nome:
         "O texto não traz cabeçalho de partes, ou a inscrição do advogado que "
         "consta nele não permite ancorar o polo. Não é erro de leitura."))
 
-st.markdown('<div class="rail"></div>', unsafe_allow_html=True)
-if avisos:
-    with st.popover(f"🔔 {len(avisos)}", use_container_width=False):
-        st.markdown("##### Avisos do sistema")
-        for titulo, corpo in avisos:
-            st.markdown(f"**{titulo}**  \n{corpo}")
-            st.divider()
-
-st.markdown(f"""
-<div class="topbar">
+hcol, bcol = st.columns([12, 1], gap="small")
+with hcol:
+    st.markdown(f"""<div class="topbar">
   <div class="logo">V</div>
   <div><h1>IA Publicações</h1>
     <p>Captura no DJEN, leitura por IA e apuração de prazo</p></div>
@@ -398,9 +387,16 @@ st.markdown(f"""
     <span class="chip">{hoje.strftime('%d/%m/%Y')}</span>
     <span class="chip">{n_regras} regra(s) de prazo validada(s)</span>
   </div>
-</div>
+</div>""", unsafe_allow_html=True)
+with bcol:
+    if avisos:
+        with st.popover(f"🔔 {len(avisos)}", use_container_width=True):
+            st.markdown("##### Avisos do sistema")
+            for titulo, corpo in avisos:
+                st.markdown(f"**{titulo}**  \n{corpo}")
+                st.divider()
 
-<div class="cards">
+st.markdown(f"""<div class="cards">
   <div class="metric purple"><div class="label">Na base</div>
     <div class="value">{tot}</div>
     <div class="hint">{novas_hoje} disponibilizadas hoje</div></div>
@@ -416,8 +412,7 @@ st.markdown(f"""
   <div class="metric green"><div class="label">Resolvidas sem IA</div>
     <div class="value">{pct_regex}%</div>
     <div class="hint">{por_regex} de {len(analisadas)} por regex · custo zero</div></div>
-</div>
-""", unsafe_allow_html=True)
+</div>""", unsafe_allow_html=True)
 
 # ------------------------------------------------------------------ tribunais
 cont_trib = Counter((p.get("sigla_tribunal") or "—") for p in pubs)
