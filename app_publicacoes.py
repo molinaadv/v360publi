@@ -35,11 +35,13 @@ CSS = """
 }
 .stApp{background:linear-gradient(180deg,#06101d 0%,#081421 100%);color:var(--text)}
 #MainMenu,footer,header,section[data-testid="stSidebar"]{display:none}
-/* barra Share/GitHub/Deploy, faixa colorida do topo e badge de status */
+/* cabeçalho, barra Share/GitHub/Deploy, faixa colorida e badge de status */
+[data-testid="stHeader"],header[data-testid="stHeader"],
 [data-testid="stToolbar"],[data-testid="stDecoration"],
 [data-testid="stStatusWidget"],[data-testid="stToolbarActions"]{
-  display:none!important;visibility:hidden!important;height:0!important}
-.block-container{padding:1.4rem 2rem 2rem;max-width:none}
+  display:none!important;visibility:hidden!important;height:0!important;
+  min-height:0!important}
+.block-container{padding:2.2rem 2rem 2rem;max-width:none}
 
 /* ---- topbar ---- */
 .topbar{display:flex;align-items:center;gap:14px;border-bottom:1px solid #10243a;
@@ -152,7 +154,8 @@ CSS = """
 .stButton>button p{text-align:left;width:100%}
 
 /* ---- sino de avisos (fica numa coluna à direita do cabeçalho) ---- */
-div[data-testid="stPopover"]{display:flex;justify-content:flex-end;margin-top:6px}
+div[data-testid="stPopover"]{display:flex;justify-content:flex-end;
+  margin-top:6px;position:relative;z-index:20}
 div[data-testid="stPopover"] button,button[data-testid="stPopoverButton"]{
   background:#2b210f!important;border:1px solid #6f5629!important;
   color:var(--yellow)!important;border-radius:11px!important;
