@@ -8,6 +8,7 @@ Secrets necessários (.streamlit/secrets.toml):
     SUPABASE_KEY = "<anon key>"
 """
 
+import hmac
 import json
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
@@ -84,12 +85,58 @@ CSS = """
 div[data-testid="stVerticalBlock"] .stButton>button{
   width:100%;text-align:left;background:var(--panel);border:1px solid var(--line);
   border-left:3px solid transparent;border-radius:10px;color:var(--ink);
-  padding:9px 12px;font-size:13px;font-weight:600;margin-bottom:5px;line-height:1.35}
+  padding:9px 12px;font-size:13px;font-weight:600;margin-bottom:5px;line-height:1.35;
+  justify-content:flex-start}
 div[data-testid="stVerticalBlock"] .stButton>button:hover{
   background:var(--panel2);border-color:var(--accent)}
+div[data-testid="stVerticalBlock"] .stButton>button p{text-align:left;width:100%}
+
+/* inputs no tema escuro (o baseweb do Streamlit vem claro por padrão) */
+div[data-baseweb="select"]>div{background:var(--panel)!important;
+  border-color:var(--line)!important;color:var(--ink)!important}
+div[data-baseweb="select"] div,div[data-baseweb="select"] span{color:var(--ink)!important}
+div[data-baseweb="select"] svg{fill:var(--muted)!important}
+ul[data-baseweb="menu"]{background:var(--panel2)!important}
+li[role="option"]{color:var(--ink)!important}
+.stTextInput input{background:var(--panel)!important;color:var(--ink)!important;
+  border-color:var(--line)!important}
+label,[data-testid="stCaptionContainer"],[data-testid="stWidgetLabel"] p{
+  color:var(--muted)!important}
 </style>
 """
 st.markdown(CSS, unsafe_allow_html=True)
+
+
+# ---------------------------------------------------------------- acesso
+def porta():
+    """Bloqueia antes de qualquer leitura do banco. Sem senha, nada de Supabase."""
+    if st.session_state.get("liberado"):
+        return
+
+    esperada = st.secrets.get("APP_SENHA")
+    if not esperada:
+        st.error("Falta definir APP_SENHA nos secrets do app.")
+        st.stop()
+
+    st.markdown("""<div class="brand">
+      <div class="badge">V360</div><h1>Publicações · Triagem</h1></div>""",
+        unsafe_allow_html=True)
+
+    _, meio, _ = st.columns([1, 1.2, 1])
+    with meio:
+        senha = st.text_input("Senha de acesso", type="password",
+                              placeholder="digite para entrar")
+        if st.button("Entrar", use_container_width=True):
+            if hmac.compare_digest(senha, str(esperada)):
+                st.session_state.liberado = True
+                st.rerun()
+            else:
+                st.error("Senha incorreta.")
+        st.caption("Acesso restrito · Molina Advogados")
+    st.stop()
+
+
+porta()
 
 
 # ---------------------------------------------------------------- dados
@@ -138,6 +185,31 @@ def dias_ate(limite):
         return (date.fromisoformat(str(limite)[:10]) - datetime.now(TZ).date()).days
     except Exception:
         return None
+
+
+def br(d):
+    """2026-07-29 → 29/07/2026"""
+    s = str(d or "")[:10]
+    return f"{s[8:10]}/{s[5:7]}/{s[0:4]}" if len(s) == 10 else "—"
+
+
+MIUDAS = {"de", "da", "do", "das", "dos", "e", "em", "a", "o", "no", "na", "contra"}
+SIGLAS = {"sjam", "jef", "inss", "trf1", "tjam", "trt11", "rpv", "adm", "sirea"}
+
+
+def bonito(t):
+    """O CNJ manda 'SENTENçA' (upper em locale C). title() reconstrói certo."""
+    if not t:
+        return "—"
+    saida = []
+    for i, w in enumerate(str(t).split()):
+        p = w.title()
+        if p.lower() in SIGLAS:
+            p = p.upper()
+        elif p.lower() in MIUDAS and i:
+            p = p.lower()
+        saida.append(p)
+    return " ".join(saida)
 
 
 try:
@@ -211,18 +283,32 @@ esq, dir_ = st.columns([1, 1.9], gap="medium")
 # ---------------------------------------------------------------- fila
 with esq:
     st.markdown('<div class="teorlab">Fila</div>', unsafe_allow_html=True)
+
+    # ordem operacional: quem tem prazo mais curto primeiro, depois as já
+    # analisadas sem prazo, e por último as que ainda não foram lidas.
+    def peso(p):
+        d = dias_ate(p.get("data_limite"))
+        if d is not None:
+            return (0, d)
+        return (1, 0) if p.get("analisada") else (2, 0)
+
+    vis = sorted(vis, key=peso)
+
     if "sel" not in st.session_state or st.session_state.sel not in {p["id"] for p in vis}:
         st.session_state.sel = vis[0]["id"]
     for p in vis[:60]:
         d = dias_ate(p.get("data_limite"))
-        marca = "●" if p.get("analisada") else "○"
+        if not p.get("analisada"):
+            marca, rot = "○", "aguardando análise"
+        else:
+            marca = "●"
+            rot = (p.get("gatilho_evento") or "sem gatilho").replace("_", " ")
         prazo = f" · {d}d" if d is not None else ""
-        ev = (p.get("gatilho_evento") or "sem evento").replace("_", " ")
-        if st.button(f"{marca} {p['numero_processo']}\n{ev}{prazo}",
+        if st.button(f"{marca} {p['numero_processo']}\n{rot}{prazo}",
                      key=f"b{p['id']}", use_container_width=True):
             st.session_state.sel = p["id"]
     if len(vis) > 60:
-        st.caption(f"mostrando 60 · +{len(vis) - 60} filtrando mais fino")
+        st.caption(f"mostrando 60 de {len(vis)} · use os filtros para afunilar")
 
 # ---------------------------------------------------------------- detalhe
 sel = next((p for p in vis if p["id"] == st.session_state.sel), vis[0])
@@ -238,9 +324,9 @@ cls_src = "regex" if origem == "regex" else "ia"
 
 with dir_:
     st.markdown(f"""<div class="card">
-      <h3>{sel.get('nome_classe') or 'Publicação'}</h3>
+      <h3>{bonito(sel.get('nome_classe'))}</h3>
       <div class="dsub">{sel['numero_processo']} · {sel.get('sigla_tribunal') or '—'}
-        · {sel.get('orgao') or '—'}</div>""", unsafe_allow_html=True)
+        · {bonito(sel.get('orgao'))}</div>""", unsafe_allow_html=True)
 
     campos = []
     if sel.get("gatilho_evento"):
@@ -248,8 +334,7 @@ with dir_:
     if sel.get("segmento"):
         campos.append(("Segmento", sel["segmento"], "calc"))
     if sel.get("data_disponibilizacao"):
-        campos.append(("Disponibilizada",
-                       str(sel["data_disponibilizacao"])[:10].replace("-", "/"), "calc"))
+        campos.append(("Disponibilizada", br(sel["data_disponibilizacao"]), "calc"))
     for rot, chaves in [("Resumo", ("resumo", "sintese")),
                         ("Providência", ("providencia", "acao_sugerida")),
                         ("Prazo no texto", ("prazo_expresso", "prazo_dias")),
@@ -259,8 +344,8 @@ with dir_:
         if v is not None:
             campos.append((rot, str(v), cls_src))
     if sel.get("data_limite"):
-        campos.append(("Termo inicial", str(sel.get("termo_inicial") or "")[:10], "calc"))
-        campos.append(("Data limite", str(sel["data_limite"])[:10], "calc"))
+        campos.append(("Termo inicial", br(sel.get("termo_inicial")), "calc"))
+        campos.append(("Data limite", br(sel["data_limite"]), "calc"))
         if sel.get("fundamento"):
             campos.append(("Fundamento", sel["fundamento"], "calc"))
 
