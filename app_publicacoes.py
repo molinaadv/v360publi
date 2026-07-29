@@ -471,45 +471,56 @@ with dir_:
         bs.append(f'<span class="badge purple">lido por {origem}</span>')
 
     texto = sel.get("texto") or "—"
-    st.markdown(f"""<div class="panel">
-      <div class="chead">
-        <div style="min-width:0">
-          <h3>{titulo}</h3>
-          <div class="case-no">{sel['numero_processo']} ·
-            {sel.get('sigla_tribunal') or '—'} · {bonito(sel.get('orgao'))}</div>
-          <div class="badges">{''.join(bs)}</div>
-        </div>
-        {cbox}
-      </div>
+    nchars = f"{len(texto):,}".replace(",", ".")
 
-      <div class="teorwrap">
-        <div class="teorhead"><h4>Publicação</h4>
-          <span>{len(texto):,} caracteres · disponibilizada {br(sel.get('data_disponibilizacao'))}
-          · PII mascarada</span></div>
-        <div class="teor">{texto}</div>
-      </div>""".replace(",", "."), unsafe_allow_html=True)
+    # HTML sem indentação e SEM linha em branco: o Markdown do Streamlit
+    # trata linha vazia como fim do bloco e o que vem indentado depois
+    # virava code block — foi o que sumiu com o teor.
+    html = (
+        '<div class="panel">'
+        '<div class="chead">'
+        '<div style="min-width:0">'
+        f'<h3>{titulo}</h3>'
+        f'<div class="case-no">{sel["numero_processo"]} · '
+        f'{sel.get("sigla_tribunal") or "—"} · {bonito(sel.get("orgao"))}</div>'
+        f'<div class="badges">{"".join(bs)}</div>'
+        '</div>'
+        f'{cbox}'
+        '</div>'
+        '<div class="teorwrap">'
+        '<div class="teorhead"><h4>Publicação</h4>'
+        f'<span>{nchars} caracteres · disponibilizada '
+        f'{br(sel.get("data_disponibilizacao"))} · PII mascarada</span></div>'
+        f'<div class="teor">{texto}</div>'
+        '</div>'
+        '</div>'
+    )
+    st.markdown(html, unsafe_allow_html=True)
 
     # --- prazo
     if sel.get("data_limite"):
-        st.markdown(f"""<div class="section"><h4>Prazo apurado</h4><div class="body">
-          <div class="kvgrid">
-            <div class="kv"><b>Publicação</b><span>{br(sel.get('data_publicacao'))}
-              <span class="src calc">calc</span></span></div>
-            <div class="kv"><b>Termo inicial</b><span>{br(sel.get('termo_inicial'))}
-              <span class="src calc">calc</span></span></div>
-            <div class="kv"><b>Data limite</b><span>{br(sel.get('data_limite'))}
-              <span class="src calc">calc</span></span></div>
-            <div class="kv"><b>Contagem</b><span>{sel.get('dias_aplicados') or '—'}
-              {sel.get('contagem') or ''}<span class="src calc">calc</span></span></div>
-          </div>
-          {f'<div style="margin-top:9px;font-size:11px;color:#6f8297">Fundamento: {sel["fundamento"]}</div>' if sel.get('fundamento') else ''}
-          </div></div>""", unsafe_allow_html=True)
+        st.markdown(
+            '<div class="section"><h4>Prazo apurado</h4><div class="body">'
+            '<div class="kvgrid">'
+            f'<div class="kv"><b>Publicação</b><span>{br(sel.get("data_publicacao"))}'
+            '<span class="src calc">calc</span></span></div>'
+            f'<div class="kv"><b>Termo inicial</b><span>{br(sel.get("termo_inicial"))}'
+            '<span class="src calc">calc</span></span></div>'
+            f'<div class="kv"><b>Data limite</b><span>{br(sel.get("data_limite"))}'
+            '<span class="src calc">calc</span></span></div>'
+            f'<div class="kv"><b>Contagem</b><span>{sel.get("dias_aplicados") or "—"} '
+            f'{sel.get("contagem") or ""}<span class="src calc">calc</span></span></div>'
+            '</div>'
+            + (f'<div style="margin-top:9px;font-size:11px;color:#6f8297">'
+               f'Fundamento: {sel["fundamento"]}</div>' if sel.get("fundamento") else "")
+            + '</div></div>', unsafe_allow_html=True)
     elif sel.get("analisada"):
         ev = str(sel.get("gatilho_evento") or "sem gatilho").replace("_", " ")
-        st.markdown(f"""<div class="warnbox"><b>Sem regra validada para “{ev}”</b>
-          O evento foi identificado, mas não há regra aprovada para esta classe e o
-          texto não traz número de dias. Entra na fila sem contagem.</div>""",
-          unsafe_allow_html=True)
+        st.markdown(
+            f'<div class="warnbox"><b>Sem regra validada para “{ev}”</b>'
+            'O evento foi identificado, mas não há regra aprovada para esta classe '
+            'e o texto não traz número de dias. Entra na fila sem contagem.</div>',
+            unsafe_allow_html=True)
 
     # --- leitura da IA
     kvs = []
@@ -534,10 +545,11 @@ with dir_:
                         for k, v, s in kvs) + '</div></div></div>',
                     unsafe_allow_html=True)
     else:
-        st.markdown("""<div class="section"><h4>Leitura da IA</h4><div class="body">
-          <div class="risk">Ainda não analisada. Está na fila do analisador —
-          nada foi extraído desta publicação.</div></div></div>""",
-          unsafe_allow_html=True)
+        st.markdown(
+            '<div class="section"><h4>Leitura da IA</h4><div class="body">'
+            '<div class="risk">Ainda não analisada. Está na fila do analisador — '
+            'nada foi extraído desta publicação.</div></div></div>',
+            unsafe_allow_html=True)
 
     # --- alertas
     alertas = g(an, "alertas", "avisos_validacao", default=[])
@@ -547,8 +559,6 @@ with dir_:
         st.markdown('<div class="section"><h4>Alertas da análise</h4><div class="body">'
                     + "".join(f'<div class="risk">{a}</div>' for a in alertas)
                     + '</div></div>', unsafe_allow_html=True)
-
-    st.markdown('</div>', unsafe_allow_html=True)
 
     with st.expander("JSON bruto da análise"):
         st.json(an if an else {"sem_analise": True})
